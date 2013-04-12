@@ -1,0 +1,8 @@
+<RCC>
+  <qresource>
+    <file>img/20px_find.jpg</file>
+    <file>img/25px_exit.png</file>
+    <file>img/40px_3floppy_unmount.png</file>
+    <file>img/erase.png</file>
+  </qresource>
+</RCC>
