@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys
@@ -6,6 +7,7 @@ from PySide import QtCore, QtGui
 from rutinas.varias import *
 import os
 import recursos
+import dbf
 
 ruta_arch_conf = os.path.dirname(sys.argv[0])
 archivo_configuracion = os.path.join(ruta_arch_conf, 'config.conf')
@@ -149,6 +151,137 @@ class ui_(QtGui.QWidget):
 
         self.setGeometry(10, 10, 880, 500)
         self.setLayout(self.gl)
+        
+        #Eventos        
+        #self.connect(self.tableWidget, QtCore.SIGNAL("itemClicked(QTableWidgetItem*)"), self.clickEnTabla)
+        self.connect(self.tableWidget, QtCore.SIGNAL("itemActivated(QTableWidgetItem*)"), self.clickEnTabla)
+        self.connect(self.tableWidget, QtCore.SIGNAL("itemEntered(QTableWidgetItem*)"), self.clickEnTabla)
+        self.connect(self.tableWidget, QtCore.SIGNAL("itemPressed(QTableWidgetItem*)"), self.clickEnTabla)
+
+        #Iniciar
+        self.inicio()
+
+    def inicio(self):
+        self.txtCodigoBarra.setFocus()
+        self.Buscar()
+
+    def Buscar(self):
+        '''
+        Metodo que se utiliza para realizar la busqueda segun lo que
+        ingresa el usuario en las cajas de texto.
+        '''
+        #Crear aqui la Cabecera del TableWidget con el Nombre del campo y el Ancho
+        listaCabecera = [('Codigo' ,170),
+                ('Nombre' ,300),
+                ('Descripcion' ,300 )]
+
+        #if self.activarBuscar:
+        #cadsq = self.armar_select()
+        lista = self.obtenerDatos()  # (cadsq)
+        self.PrepararTableWidget(len(lista), listaCabecera)  # Configurar el tableWidget
+        self.InsertarRegistros(lista)  # Insertar los Registros en el TableWidget
+        self.tableWidget.setCurrentCell(15, 1)
+        #self.tableWidget.cellClicked(15, 1)
+
+    def obtenerDatos(self):
+        t = 'farmacos.dbf'
+        farmacos = dbf.Table(t)
+        farmacos.open()
+        
+        lista = []
+        for reg in farmacos:
+            c1 = reg[1]
+            c2 = reg[8]
+            c3 = reg[9]
+            registro = '%s, %s, %s' %(c1, c2, c3)
+            lista.append((c1, c2, c3))
+        return lista
+
+    def PrepararTableWidget(self, cantidadReg = 0, Columnas = []):
+        '''
+        Parametros pasados (2) (CantidadReg: Entero) y (Columnas :Lista)
+        Ej: PrepararTableWidget(50, ['ID', 'FECHA', 'PUERTO'])
+
+        Meotodo que permite asignar y ajustar  las columnas que tendra el tablewidget
+        basados en la cantidad de conlumnas y la cantidad de registros que le son
+        pasados como parametro
+        '''
+
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(245, 244, 226))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
+
+        brush = QtGui.QBrush(QtGui.QColor(254, 206, 45))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Highlight, brush)
+
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 203))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.AlternateBase, brush)
+
+        self.tableWidget.setColumnCount(len(Columnas))
+        self.tableWidget.setRowCount(cantidadReg)
+
+        #Armar Cabeceras de las Columnas
+        cabecera = []
+        for f in Columnas:
+            nombreCampo = f[0]
+            cabecera.append(nombreCampo)
+
+        for f in Columnas:
+            posicion = Columnas.index(f)
+            nombreCampo = f[0]
+            ancho = f[1]
+            self.tableWidget.horizontalHeader().resizeSection(posicion, ancho)
+
+        self.tableWidget.setPalette(palette)
+        self.tableWidget.setAutoFillBackground(False)
+        self.tableWidget.setAlternatingRowColors(True)
+        self.tableWidget.setHorizontalHeaderLabels(cabecera)
+
+        self.tableWidget.setSelectionMode(QtGui.QTableWidget.SingleSelection)
+        self.tableWidget.setSelectionBehavior(QtGui.QTableView.SelectRows)
+
+    def InsertarRegistros(self, cursor):
+        '''
+        Metodo que permite asignarle registros al tablewidget
+        parametros recibitos (1) Tipo (Lista)
+        Ej:RowSource(['0', 'Carlos', 'Garcia'], ['1', 'Nairesther', 'Gomez'])
+        '''
+
+        ListaCursor = cursor
+        for pos, fila in enumerate(ListaCursor):
+            for posc, columna in enumerate(fila):
+                x = columna.encode('ASCII', 'ignore')
+                self.tableWidget.setItem(pos, posc, QtGui.QTableWidgetItem(str(x)))
+
+    def clickEnTabla(self):
+        '''
+        Este metodo se activa al momento de hace click en el tableWidget y permite
+        mostrar el contenido de los campos de la fila seleccionada en el tableWidget
+        en los textbox bien sea para Verlos, modificarlos o Eliminarlos
+        '''
+
+        #self.activarBuscar = False
+        fila = self.tableWidget.currentRow()
+        #total_columnas = self.tableWidget.columnCount()
+
+        #Capturar la Fila seleccionada del Table Widget
+        twCodigo = self.tableWidget.item(fila, 0).text()
+        twNombre = self.tableWidget.item(fila, 1).text()
+        twDescripcion = self.tableWidget.item(fila, 2).text()
+
+        #Asignar a los QLineEdit el Valor de la fila del table widget
+        self.txtCodigoBarra.setText('')
+        self.txtCodigoFarmaco.setText(twCodigo)
+        self.txtNombreFarmaco.setText(twNombre)
+        self.txtCodigoBarra.setFocus()
+        #self.txtDescripcion.setText(twDescripcion)
+       #self.cbxTipoContacto.currentText()
+       # self.btnModificar.setEnabled(True)
+       # self.btnEliminar.setEnabled(True)
+
 
 
 if __name__ == '__main__':
