@@ -8,10 +8,12 @@ from rutinas.varias import *
 import os
 import recursos
 import dbf
+#import pdb 
 
 ruta_arch_conf = os.path.dirname(sys.argv[0])
 archivo_configuracion = os.path.join(ruta_arch_conf, 'config.conf')
 fc = FileConfig(archivo_configuracion)
+#pdb.set_trace()
 
 
 class miQLineEdit(QtGui.QLineEdit):
