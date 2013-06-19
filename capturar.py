@@ -165,7 +165,47 @@ class ui_(QtGui.QWidget):
 
     def inicio(self):
         self.txtCodigoBarra.setFocus()
-        self.Buscar()
+        #self.iniciarForm()
+        #self.Buscar()
+    
+    def iniciarForm(self):
+        '''
+        '''
+
+        #Habilitar el QLineEdit del ID  y el TableWidget ya que
+        #el boton nuevo los deshabilita
+        #self.txtId.setEnabled(True)
+        self.tableWidget.setEnabled(True)
+
+        #Activar la Busqueda al escribir el los textbox
+        self.activarBuscar = True
+
+        #Activar Bandera para saber cuando el boton Nuevo funciona como Boton Nuevo
+        #self.banderaNuevo = True
+        #self.banderaModificar = True
+
+        #Deshabilitar y Habilitar botones
+        #self.btnNuevo.setEnabled(True)
+        #self.btnModificar.setEnabled(False)
+        #self.btnEliminar.setEnabled(False)
+        #self.btnLimpiar.setEnabled(True)
+        #self.btnDeshacer.setEnabled(False)
+        #self.btnExportar.setEnabled(True)
+        self.btnSalir.setEnabled(True)
+
+        #Cambiar el Caption o Text del Boton
+        #self.btnNuevo.setText("&Nuevo")
+        #self.btnModificar.setText('&Modificar')
+
+        #Cambiar icono del Boton Nuevo por Nuevo
+        #icon1 = QtGui.QIcon()
+        #icon1.addPixmap(QtGui.QPixmap(":/img/30px_Crystal_Clear_app_List_manager.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        #self.btnNuevo.setIcon(icon1)
+
+        #Cambiar icono del Boton Modificar por Modificar
+        #icon2 = QtGui.QIcon()
+        #icon2.addPixmap(QtGui.QPixmap(":/img/40px_Crystal_Clear_app_kedit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        #self.btnModificar.setIcon(icon2)
 
     def Buscar(self):
         '''
@@ -177,13 +217,50 @@ class ui_(QtGui.QWidget):
                 ('Nombre' ,300),
                 ('Descripcion' ,300 )]
 
-        #if self.activarBuscar:
-        #cadsq = self.armar_select()
-        lista = self.obtenerDatos()  # (cadsq)
-        self.PrepararTableWidget(len(lista), listaCabecera)  # Configurar el tableWidget
-        self.InsertarRegistros(lista)  # Insertar los Registros en el TableWidget
-        self.tableWidget.setCurrentCell(15, 1)
-        #self.tableWidget.cellClicked(15, 1)
+        if self.activarBuscar:
+            cadsq = self.armar_select()
+            
+            lista = self.obtenerDatos()  # (cadsq)
+            self.PrepararTableWidget(len(lista), listaCabecera)  # Configurar el tableWidget
+            self.InsertarRegistros(lista)  # Insertar los Registros en el TableWidget
+            self.tableWidget.setCurrentCell(15, 1)
+            #self.tableWidget.cellClicked(15, 1)
+
+    def armar_select(self):
+        '''
+        Metodo que permite armar la consulta select a medica que el usuario
+        va tecleando en los textbox
+        Parametro devuelto(1) String con la cadena sql de busqueda
+        '''
+
+        #Campturar lo que tienne los LineEdit
+        lcCodigoBarra = self.txtCodigoBarra.text()
+        lcCodigoFarmaco = self.txtCodigoFarmaco.text()
+        lcNombreFarmaco = self.txtNombreFarmaco.text()
+
+        vCodigoBarra  = " codigobarra = {0} AND ".format(lcCodigoBarra) if lcId else ''
+        vCodigoFarmaco = " codigofarmaco = {0} AND ".format(lcCodigoFarmaco) if lcCodigoFarmaco else ''
+        vNombreFarmaco = " nombrefarmaco = {0} AND ".format(lcNombreFarmaco) if lcNombreFarmaco else ''
+
+        campos = vCodigoBarra + vCodigoFarmaco + vNombreFarmaco
+
+        cadenaSql = '''select
+        c.id ,c.cedula, c.codigo, c.nombre, c.apellido,c.usuario_red,
+        c.tipo_contacto_id,
+        c.telefono_oficina, c.telefono_movil,
+        c.email,
+        c.observacion,
+        c.departamento_id, d.sym as departamento,
+        c.localidad_id, l.sym as localidad,
+        c.ubicacion_id, u.sym as ubicacion,
+        c.foto
+        from asiste.contactos c
+        left join asiste.departamento d on c.departamento_id = d.id
+        left join asiste.localidad l on c.localidad_id = l.id
+        left join asiste.ubicacion u on c.ubicacion_id = u.id
+         where {0} c.del = 0 order by c.apellido, c.nombre
+        '''.format(campos)
+        return cadenaSql
 
     def obtenerDatos(self):
         t = 'farmacos.dbf'
