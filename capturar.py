@@ -114,6 +114,13 @@ class ui_(QtGui.QWidget):
         self.colorFondo = QtGui.QColor(254, 230, 150)
         palette = QtGui.QPalette()
 
+        #Campo Id
+        self.vlId = QtGui.QVBoxLayout()
+        self.lblId = QtGui.QLabel('ID:')
+        self.txtId = miQLineEdit()
+        self.vlId.addWidget(self.lblId)
+        self.vlId.addWidget(self.txtId)
+        
         #Campo Codigo de Barra
         self.vlCodigoBarra = QtGui.QVBoxLayout()
         self.lblCodigoBarra = QtGui.QLabel('Codigo de Barra:')
@@ -135,11 +142,20 @@ class ui_(QtGui.QWidget):
         self.vlNombreFarmaco.addWidget(self.lblNombreFarmaco)
         self.vlNombreFarmaco.addWidget(self.txtNombreFarmaco)
 
+        #Campo Descripcion del Farmaco
+        self.vlDescripcionFarmaco = QtGui.QVBoxLayout()
+        self.lblDescripcionFarmaco = QtGui.QLabel('Descripcion del Farmaco:')
+        self.txtDescripcionFarmaco = miQLineEdit()
+        self.vlDescripcionFarmaco.addWidget(self.lblDescripcionFarmaco)
+        self.vlDescripcionFarmaco.addWidget(self.txtDescripcionFarmaco)
+
         #Layout Horizontal para los Labels y las Cajas de texto
         self.hlCampos = QtGui.QHBoxLayout()
+        self.hlCampos.addLayout(self.vlId)
         self.hlCampos.addLayout(self.vlCodigoBarra)
         self.hlCampos.addLayout(self.vlCodigoFarmaco)
         self.hlCampos.addLayout(self.vlNombreFarmaco)
+        self.hlCampos.addLayout(self.vlDescripcionFarmaco)
 
         #La Tabla
         self.tableWidget = QtGui.QTableWidget()
@@ -151,22 +167,32 @@ class ui_(QtGui.QWidget):
         self.gl.addLayout(self.hlCampos, 2, 1, 1, 8)
         self.gl.addWidget(self.tableWidget, 3, 1, 1, 8)
 
-        self.setGeometry(10, 10, 880, 500)
+        self.setGeometry(10, 10, 1015, 500)
         self.setLayout(self.gl)
         
-        #Eventos        
-        #self.connect(self.tableWidget, QtCore.SIGNAL("itemClicked(QTableWidgetItem*)"), self.clickEnTabla)
-        self.connect(self.tableWidget, QtCore.SIGNAL("itemActivated(QTableWidgetItem*)"), self.clickEnTabla)
-        self.connect(self.tableWidget, QtCore.SIGNAL("itemEntered(QTableWidgetItem*)"), self.clickEnTabla)
-        self.connect(self.tableWidget, QtCore.SIGNAL("itemPressed(QTableWidgetItem*)"), self.clickEnTabla)
-
+        #Eventos de los Botones.
+        self.connect(self.btnLimpiar, QtCore.SIGNAL("clicked()"), self.limpiarText)
+        
+        #Eventos de la Tabla
+        self.connect(self.tableWidget, QtCore.SIGNAL("itemClicked(QTableWidgetItem*)"), self.clickEnTabla)
+        
+        #Eventos de los QLineEdit
+        #self.connect(self.txtCodigoBarra, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        self.connect(self.txtCodigoFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        self.connect(self.txtNombreFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        self.connect(self.txtDescripcionFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        
         #Iniciar
         self.inicio()
 
     def inicio(self):
+        ''' '''
+        host,  db, user, clave = fc.opcion_consultar('POSTGRESQL')
+        self.cadconex = "host='%s' dbname='%s' user='%s' password='%s'" % (host[1], db[1], user[1], clave[1])
+
         self.txtCodigoBarra.setFocus()
-        #self.iniciarForm()
-        #self.Buscar()
+        self.iniciarForm()
+        self.Buscar()
     
     def iniciarForm(self):
         '''
@@ -174,7 +200,7 @@ class ui_(QtGui.QWidget):
 
         #Habilitar el QLineEdit del ID  y el TableWidget ya que
         #el boton nuevo los deshabilita
-        #self.txtId.setEnabled(True)
+        self.txtId.setEnabled(False)
         self.tableWidget.setEnabled(True)
 
         #Activar la Busqueda al escribir el los textbox
@@ -191,7 +217,7 @@ class ui_(QtGui.QWidget):
         #self.btnLimpiar.setEnabled(True)
         #self.btnDeshacer.setEnabled(False)
         #self.btnExportar.setEnabled(True)
-        self.btnSalir.setEnabled(True)
+        #self.btnSalir.setEnabled(True)
 
         #Cambiar el Caption o Text del Boton
         #self.btnNuevo.setText("&Nuevo")
@@ -213,68 +239,63 @@ class ui_(QtGui.QWidget):
         ingresa el usuario en las cajas de texto.
         '''
         #Crear aqui la Cabecera del TableWidget con el Nombre del campo y el Ancho
-        listaCabecera = [('Codigo' ,170),
+        listaCabecera = [('id', 80), 
+                ('CodigoBarra' ,170),
+                ('Codigo' ,170),
                 ('Nombre' ,300),
                 ('Descripcion' ,300 )]
 
         if self.activarBuscar:
             cadsq = self.armar_select()
-            
-            lista = self.obtenerDatos()  # (cadsq)
+            lista = self.obtenerDatos(cadsq)
             self.PrepararTableWidget(len(lista), listaCabecera)  # Configurar el tableWidget
             self.InsertarRegistros(lista)  # Insertar los Registros en el TableWidget
-            self.tableWidget.setCurrentCell(15, 1)
+            #self.tableWidget.setCurrentCell(15, 1)
             #self.tableWidget.cellClicked(15, 1)
 
     def armar_select(self):
         '''
-        Metodo que permite armar la consulta select a medica que el usuario
+        Metodo que permite armar la consulta select a medida que el usuario
         va tecleando en los textbox
         Parametro devuelto(1) String con la cadena sql de busqueda
         '''
 
         #Campturar lo que tienne los LineEdit
+        lcId = self.txtId.text()
         lcCodigoBarra = self.txtCodigoBarra.text()
         lcCodigoFarmaco = self.txtCodigoFarmaco.text()
         lcNombreFarmaco = self.txtNombreFarmaco.text()
+        lcDescripcionFarmaco = self.txtDescripcionFarmaco.text()
 
-        vCodigoBarra  = " codigobarra = {0} AND ".format(lcCodigoBarra) if lcId else ''
-        vCodigoFarmaco = " codigofarmaco = {0} AND ".format(lcCodigoFarmaco) if lcCodigoFarmaco else ''
-        vNombreFarmaco = " nombrefarmaco = {0} AND ".format(lcNombreFarmaco) if lcNombreFarmaco else ''
+        vId  = " Id = {0} AND ".format(lcId) if lcId else ''
+        vCodigoBarra  = " codigobarra = '{0}' AND ".format(lcCodigoBarra) if lcCodigoBarra else ''
+        vCodigoFarmaco = " cod_far like '%{0}%' AND ".format(lcCodigoFarmaco) if lcCodigoFarmaco else ''
+        vNombreFarmaco = " nom_far like '%{0}%' AND ".format(lcNombreFarmaco) if lcNombreFarmaco else ''
+        vDescripcionFarmaco = " des_pre like '%{0}%' AND ".format(lcDescripcionFarmaco) if lcDescripcionFarmaco else ''
 
-        campos = vCodigoBarra + vCodigoFarmaco + vNombreFarmaco
+        campos = vId + vCodigoBarra + vCodigoFarmaco + vNombreFarmaco + vDescripcionFarmaco
+        camposConWhere = " where {0} ".format(campos[:-4]) if campos else ''
 
-        cadenaSql = '''select
-        c.id ,c.cedula, c.codigo, c.nombre, c.apellido,c.usuario_red,
-        c.tipo_contacto_id,
-        c.telefono_oficina, c.telefono_movil,
-        c.email,
-        c.observacion,
-        c.departamento_id, d.sym as departamento,
-        c.localidad_id, l.sym as localidad,
-        c.ubicacion_id, u.sym as ubicacion,
-        c.foto
-        from asiste.contactos c
-        left join asiste.departamento d on c.departamento_id = d.id
-        left join asiste.localidad l on c.localidad_id = l.id
-        left join asiste.ubicacion u on c.ubicacion_id = u.id
-         where {0} c.del = 0 order by c.apellido, c.nombre
-        '''.format(campos)
+        cadenaSql = '''select id, codigobarra, cod_far, nom_far, des_pre from codigob.farmacos {0}'''.format(camposConWhere)
         return cadenaSql
 
-    def obtenerDatos(self):
-        t = 'farmacos.dbf'
-        farmacos = dbf.Table(t)
-        farmacos.open()
-        
-        lista = []
-        for reg in farmacos:
-            c1 = reg[1]
-            c2 = reg[8]
-            c3 = reg[9]
-            registro = '%s, %s, %s' %(c1, c2, c3)
-            lista.append((c1, c2, c3))
-        return lista
+    def obtenerDatos(self, cadena_pasada):
+        '''
+        Ejecuta la Consulta SQl a el servidor PostGreSQL segun la cadena SQL
+        pasada como parametro
+        parametros recibidos: (1) String
+        parametros devueltos: (1) Lista
+        Ej: obtener_datos('select *from tabla where condicion')
+        '''
+
+        try:
+            pg = ConectarPG(self.cadconex)
+            self.registros = pg.ejecutar(cadena_pasada)
+            pg.cur.close()
+            pg.conn.close()
+        except:
+            self.registros = []
+        return self.registros
 
     def PrepararTableWidget(self, cantidadReg = 0, Columnas = []):
         '''
@@ -332,7 +353,7 @@ class ui_(QtGui.QWidget):
         ListaCursor = cursor
         for pos, fila in enumerate(ListaCursor):
             for posc, columna in enumerate(fila):
-                x = columna.encode('ASCII', 'ignore')
+                x = columna  # columna.encode('ASCII', 'ignore')
                 self.tableWidget.setItem(pos, posc, QtGui.QTableWidgetItem(str(x)))
 
     def clickEnTabla(self):
@@ -347,21 +368,32 @@ class ui_(QtGui.QWidget):
         #total_columnas = self.tableWidget.columnCount()
 
         #Capturar la Fila seleccionada del Table Widget
-        twCodigo = self.tableWidget.item(fila, 0).text()
-        twNombre = self.tableWidget.item(fila, 1).text()
-        twDescripcion = self.tableWidget.item(fila, 2).text()
+        twId = self.tableWidget.item(fila, 0).text()
+        twCodigoBarra = self.tableWidget.item(fila, 1).text()
+        twCodigo = self.tableWidget.item(fila, 2).text()
+        twNombre = self.tableWidget.item(fila, 3).text()
+        twDescripcion = self.tableWidget.item(fila, 4).text()
 
         #Asignar a los QLineEdit el Valor de la fila del table widget
-        self.txtCodigoBarra.setText('')
+        self.txtId.setText(twId)
+        cb = '' if 'None' in twCodigoBarra else twCodigoBarra
+        self.txtCodigoBarra.setText(cb)
         self.txtCodigoFarmaco.setText(twCodigo)
         self.txtNombreFarmaco.setText(twNombre)
+        self.txtDescripcionFarmaco.setText(twDescripcion)
         self.txtCodigoBarra.setFocus()
-        #self.txtDescripcion.setText(twDescripcion)
-       #self.cbxTipoContacto.currentText()
-       # self.btnModificar.setEnabled(True)
-       # self.btnEliminar.setEnabled(True)
 
-
+    def limpiarText(self):
+        '''
+        Limpia los QlineEdit o Textbox
+        '''
+        self.txtId.clear()
+        self.txtCodigoBarra.clear()
+        self.txtCodigoFarmaco.clear()
+        self.txtNombreFarmaco.clear()
+        self.txtDescripcionFarmaco.clear()
+        self.iniciarForm()
+        self.txtCodigoBarra.setFocus()
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
