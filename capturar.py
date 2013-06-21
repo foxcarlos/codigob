@@ -177,7 +177,7 @@ class ui_(QtGui.QWidget):
         self.connect(self.tableWidget, QtCore.SIGNAL("itemClicked(QTableWidgetItem*)"), self.clickEnTabla)
         
         #Eventos de los QLineEdit
-        #self.connect(self.txtCodigoBarra, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        self.connect(self.txtCodigoBarra, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
         self.connect(self.txtCodigoFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
         self.connect(self.txtNombreFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
         self.connect(self.txtDescripcionFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
@@ -264,14 +264,14 @@ class ui_(QtGui.QWidget):
         lcId = self.txtId.text()
         lcCodigoBarra = self.txtCodigoBarra.text()
         lcCodigoFarmaco = self.txtCodigoFarmaco.text()
-        lcNombreFarmaco = self.txtNombreFarmaco.text()
-        lcDescripcionFarmaco = self.txtDescripcionFarmaco.text()
+        lcNombreFarmaco = self.txtNombreFarmaco.text().upper()
+        lcDescripcionFarmaco = self.txtDescripcionFarmaco.text().upper()
 
         vId  = " Id = {0} AND ".format(lcId) if lcId else ''
         vCodigoBarra  = " codigobarra = '{0}' AND ".format(lcCodigoBarra) if lcCodigoBarra else ''
         vCodigoFarmaco = " cod_far like '%{0}%' AND ".format(lcCodigoFarmaco) if lcCodigoFarmaco else ''
-        vNombreFarmaco = " nom_far like '%{0}%' AND ".format(lcNombreFarmaco) if lcNombreFarmaco else ''
-        vDescripcionFarmaco = " des_pre like '%{0}%' AND ".format(lcDescripcionFarmaco) if lcDescripcionFarmaco else ''
+        vNombreFarmaco = " upper(nom_far) like '%{0}%' AND ".format(lcNombreFarmaco) if lcNombreFarmaco else ''
+        vDescripcionFarmaco = " upper(des_pre) like '%{0}%' AND ".format(lcDescripcionFarmaco) if lcDescripcionFarmaco else ''
 
         campos = vId + vCodigoBarra + vCodigoFarmaco + vNombreFarmaco + vDescripcionFarmaco
         camposConWhere = " where {0} ".format(campos[:-4]) if campos else ''
