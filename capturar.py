@@ -72,18 +72,28 @@ class ui_(QtGui.QWidget):
         self.setPalette(palette)
         #self.statusBar().showMessage("Listo")
 
+        #Boton Guardar
         self.btnGuardar = QtGui.QPushButton()
         icon12 = QtGui.QIcon()
         icon12.addPixmap(QtGui.QPixmap(":/img/40px_3floppy_unmount.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnGuardar.setIcon(icon12)
         self.btnGuardar.setText('&Guardar')
 
+        #Boton Buscar
+        self.btnBuscar = QtGui.QPushButton()
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/img/20px_find.jpg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btnBuscar.setIcon(icon)
+        self.btnBuscar.setText('&Buscar')
+
+        #Boton Limpiar
         self.btnLimpiar = QtGui.QPushButton()
         icon5 = QtGui.QIcon()
         icon5.addPixmap(QtGui.QPixmap(":/img/erase.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnLimpiar.setIcon(icon5)
         self.btnLimpiar.setText(' &Limpiar ')
 
+        #Boton salir
         self.btnSalir = QtGui.QPushButton()
         icon7 = QtGui.QIcon()
         icon7.addPixmap(QtGui.QPixmap(":/img/25px_exit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -98,6 +108,7 @@ class ui_(QtGui.QWidget):
 
         #Agregar los Botones superiores al Layout Horizontal
         self.hlBotones.addWidget(self.btnGuardar)
+        self.hlBotones.addWidget(self.btnBuscar)
         self.hlBotones.addWidget(self.btnLimpiar)
         self.hlBotones.addItem(spacerItem1)  # Insertar un spaceIntem entre los Botones
         self.hlBotones.addWidget(self.btnSalir)
@@ -172,16 +183,17 @@ class ui_(QtGui.QWidget):
         
         #Eventos de los Botones.
         self.connect(self.btnLimpiar, QtCore.SIGNAL("clicked()"), self.limpiarText)
-        
+        self.connect(self.btnBuscar, QtCore.SIGNAL("clicked()"), self.Buscar)
+
         #Eventos de la Tabla
         self.connect(self.tableWidget, QtCore.SIGNAL("itemClicked(QTableWidgetItem*)"), self.clickEnTabla)
         
         #Eventos de los QLineEdit
         self.connect(self.txtCodigoBarra, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
-        self.connect(self.txtCodigoFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
-        self.connect(self.txtNombreFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
-        self.connect(self.txtDescripcionFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
-        
+        #self.connect(self.txtCodigoFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        #self.connect(self.txtNombreFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+        #self.connect(self.txtDescripcionFarmaco, QtCore.SIGNAL("textChanged(QString)"), self.Buscar)
+ 
         #Iniciar
         self.inicio()
 
