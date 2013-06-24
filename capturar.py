@@ -8,7 +8,7 @@ from rutinas.varias import *
 import os
 import recursos
 import dbf
-#import pdb 
+import pdb 
 
 ruta_arch_conf = os.path.dirname(sys.argv[0])
 archivo_configuracion = os.path.join(ruta_arch_conf, 'config.conf')
@@ -182,6 +182,7 @@ class ui_(QtGui.QWidget):
         self.setLayout(self.gl)
         
         #Eventos de los Botones.
+        self.connect(self.btnGuardar, QtCore.SIGNAL("clicked()"), self.Guardar)
         self.connect(self.btnLimpiar, QtCore.SIGNAL("clicked()"), self.limpiarText)
         self.connect(self.btnBuscar, QtCore.SIGNAL("clicked()"), self.Buscar)
 
@@ -288,7 +289,7 @@ class ui_(QtGui.QWidget):
         campos = vId + vCodigoBarra + vCodigoFarmaco + vNombreFarmaco + vDescripcionFarmaco
         camposConWhere = " where {0} ".format(campos[:-4]) if campos else ''
 
-        cadenaSql = '''select id, codigobarra, cod_far, nom_far, des_pre from codigob.farmacos {0}'''.format(camposConWhere)
+        cadenaSql = '''select id, codigobarra, cod_far, nom_far, des_pre from codigob.farmacos {0} order by id'''.format(camposConWhere)
         return cadenaSql
 
     def obtenerDatos(self, cadena_pasada):
@@ -302,10 +303,20 @@ class ui_(QtGui.QWidget):
 
         try:
             pg = ConectarPG(self.cadconex)
+        except:
+            # Obtiene la ecepcion mas reciente
+            exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+            # sale del Script e Imprime un error con lo que sucedio.
+            sys.exit("Database connection failed!\n ->%s" % (exceptionValue))
+        try:
             self.registros = pg.ejecutar(cadena_pasada)
             pg.cur.close()
             pg.conn.close()
         except:
+            # Obtiene la ecepcion mas reciente
+            exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+            # sale del Script e Imprime un error con lo que sucedio.
+            sys.exit("Database connection failed!\n ->%s" % (exceptionValue))
             self.registros = []
         return self.registros
 
@@ -395,6 +406,30 @@ class ui_(QtGui.QWidget):
         self.txtDescripcionFarmaco.setText(twDescripcion)
         self.txtCodigoBarra.setFocus()
 
+    def Guardar(self):
+        '''Metodo que permite guardar el codigo de barras
+        en la tabla'''
+        lcId = self.txtId.text()
+        lcCodigoBarra = self.txtCodigoBarra.text()
+        if not lcId:
+            print('No hay datos para guardar')
+        else:
+            lcCadInsert = 'update codigob.farmacos set codigobarra = {0} where id = {1}'.format(lcCodigoBarra, lcId)
+            try:
+                pg = ConectarPG(self.cadconex)
+                self.registros = pg.ejecutar(lcCadInsert)
+                pg.conn.commit()
+                pg.cur.close()
+                pg.conn.close()
+                
+                lcMensaje = 'Registro Guardado Satisfactoriamente'
+                msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Information, 'Felicidades',lcMensaje)
+                msgBox.exec_()
+
+                self.Buscar()
+            except:
+                print('Error al Intertar Guardar el registro Id:{0}'.formmat(lcId))
+
     def limpiarText(self):
         '''
         Limpia los QlineEdit o Textbox
@@ -406,6 +441,7 @@ class ui_(QtGui.QWidget):
         self.txtDescripcionFarmaco.clear()
         self.iniciarForm()
         self.txtCodigoBarra.setFocus()
+        self.Buscar()
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
